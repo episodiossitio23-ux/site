@@ -21,6 +21,7 @@ function toMeta(photo: PhotoDraft): PhotoMeta {
 interface StoreValue {
   photos: PhotoDraft[];
   addPhotos: (added: PhotoDraft[]) => void;
+  reorderPhotos: (activeId: string, targetId: string) => void;
   updatePhoto: (id: string, patch: Partial<PhotoDraft>) => void;
   removePhoto: (id: string) => void;
   clearCart: () => void;
@@ -76,6 +77,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const addPhotos = useCallback((added: PhotoDraft[]) => {
     setPhotos((prev) => [...prev, ...added]);
+  }, []);
+
+  const reorderPhotos = useCallback((activeId: string, targetId: string) => {
+    setPhotos((prev) => {
+      const from = prev.findIndex((photo) => photo.id === activeId);
+      const to = prev.findIndex((photo) => photo.id === targetId);
+      if (from < 0 || to < 0 || from === to) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   }, []);
 
   const updatePhoto = useCallback((id: string, patch: Partial<PhotoDraft>) => {
@@ -141,6 +154,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => ({
       photos,
       addPhotos,
+      reorderPhotos,
       updatePhoto,
       removePhoto,
       clearCart,
@@ -152,6 +166,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [
       photos,
       addPhotos,
+      reorderPhotos,
       updatePhoto,
       removePhoto,
       clearCart,
