@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Upload, ShoppingBag, Check, Trash2, Copy, GripVertical } from 'lucide-react';
 import SiteHeader from '@/components/layout/SiteHeader';
 import CaptionControls from '@/components/editor/CaptionControls';
@@ -17,7 +17,7 @@ import {
   getQualityLevel,
   QUALITY_LABEL,
 } from '@/lib/printLayout';
-import type { CropTransform, Rotation } from '@/types/store';
+import type { CropTransform, PhotoDraft, Rotation } from '@/types/store';
 
 export default function EditorPage() {
   const { formats, error } = useFormats();
@@ -44,6 +44,7 @@ export default function EditorPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [batchIds, setBatchIds] = useState<string[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selected = photos.find((p) => p.id === selectedId) ?? photos[0] ?? null;
   const formatId = selected?.formatId ?? availableFormats[0]?.id ?? null;
@@ -51,9 +52,13 @@ export default function EditorPage() {
   const selectedVariant = selectedProduct?.variants.find((variant) => variant.format_id === format?.id) ?? null;
 
   const handleFiles = async (files: FileList | File[]) => {
-    const results = await Promise.all(Array.from(files).map(createPhotoDraft));
-    const added = results.flatMap((r) => (r.ok ? [r.photo] : []));
-    const problems = results.flatMap((r) => (r.ok ? [] : [r.reason]));
+    const added: PhotoDraft[] = [];
+    const problems: string[] = [];
+    for (const file of Array.from(files)) {
+      const result = await createPhotoDraft(file);
+      if (result.ok) added.push(result.photo);
+      else problems.push(result.reason);
+    }
     if (added.length) {
       addPhotos(added);
       if (!selected) setSelectedId(added[0].id);
@@ -174,11 +179,15 @@ export default function EditorPage() {
           <span className="mt-3 font-medium text-stone-800">Arraste suas fotos aqui ou clique para escolher</span>
           <span className="mt-1 text-sm text-stone-500">JPG ou PNG. Você pode selecionar várias de uma vez.</span>
           <input
+            ref={fileInputRef}
             type="file"
             multiple
             accept=".jpg,.jpeg,.png,.heic,.heif,image/*"
             className="hidden"
-            onChange={(e) => e.target.files && void handleFiles(e.target.files)}
+            onChange={(e) => {
+              if (e.target.files?.length) void handleFiles(e.target.files);
+              e.target.value = '';
+            }}
           />
         </label>
 
