@@ -1,4 +1,5 @@
-import { ArrowRight, Camera, Check, Clock3 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, Camera, Check, Clock3, Sparkles } from 'lucide-react';
 import SiteHeader from '@/components/layout/SiteHeader';
 import { useCatalog } from '@/hooks/useCatalog';
 import { formatBRL } from '@/lib/format';
@@ -11,6 +12,8 @@ function categoryFor(categories: CatalogCategory[], categoryId: string): Catalog
 
 export default function CatalogPage() {
   const { categories, products, loading, error } = useCatalog();
+  const [categoryFilter, setCategoryFilter] = useState('todos');
+  const visibleProducts = categoryFilter === 'todos' ? products : products.filter((product) => product.category_id === categoryFilter);
 
   return (
     <main>
@@ -26,14 +29,41 @@ export default function CatalogPage() {
         {loading && <p className="mt-10 text-stone-500">Carregando produtos...</p>}
         {!loading && products.length === 0 && <p className="mt-10 rounded-3xl border border-dashed border-stone-300 p-10 text-center text-stone-500">Nenhum produto disponível no momento.</p>}
 
+        {!loading && products.length > 0 && (
+          <div className="mt-10 flex flex-wrap items-center gap-2" aria-label="Filtrar por categoria">
+            <button
+              onClick={() => setCategoryFilter('todos')}
+              className={`rounded-full px-4 py-2 text-sm transition ${categoryFilter === 'todos' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+            >
+              Todos
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setCategoryFilter(category.id)}
+                className={`rounded-full px-4 py-2 text-sm transition ${categoryFilter === category.id ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!loading && visibleProducts.length === 0 && products.length > 0 && <p className="mt-10 rounded-3xl border border-dashed border-stone-300 p-10 text-center text-stone-500">Nenhum produto nesta categoria.</p>}
+
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => {
+          {visibleProducts.map((product) => {
             const category = categoryFor(categories, product.category_id);
             const startingPrice = Math.min(...product.variants.map((variant) => variant.price_cents));
             return (
               <article key={product.id} className="group flex flex-col overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                <div className="flex h-44 items-center justify-center bg-clay-50 text-clay-500">
+                <div className="relative flex h-44 items-center justify-center bg-clay-50 text-clay-500">
                   {product.image_url ? <img src={product.image_url} alt="" className="h-full w-full object-cover" /> : <Camera size={42} strokeWidth={1.5} />}
+                  {product.is_featured && (
+                    <span className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-medium text-stone-800 shadow-sm">
+                      <Sparkles size={13} className="text-clay-600" /> Destaque
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col p-6">
                   <p className="text-xs font-medium uppercase tracking-wide text-clay-600">{category?.name ?? 'Produto'}</p>
