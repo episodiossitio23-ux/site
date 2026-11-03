@@ -1,0 +1,17 @@
+{
+  "projectId": "72634140",
+  "functions": {
+    "password-recovery": {
+      "hasChanged": false,
+      "hash": "b299ca4b71935cb0b3848bdd75aa65477b4e6d0017528802964aa1574fbf707a"
+    },
+    "mercadopago-checkout": {
+      "hasChanged": false,
+      "hash": "5ff2c06b52af6705ab0dac5a5f35d71797462ffa8bc4472f8c2e1f5aed8574e5"
+    },
+    "mercadopago-webhook": {
+      "hasChanged": false,
+      "hash": "472dd9554f5e8074fbfd2e92280139509a842d1fb9920e5210039821ff5000b4"
+    }
+  }
+}
