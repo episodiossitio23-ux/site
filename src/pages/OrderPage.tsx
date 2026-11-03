@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import SiteHeader from '@/components/layout/SiteHeader';
 import PayWithMercadoPago from '@/components/order/PayWithMercadoPago';
+import OrderProgress from '@/components/account/OrderProgress';
 import { supabase } from '@/lib/supabase';
 import { formatBRL, formatDate } from '@/lib/format';
 import { navigate } from '@/lib/router';
@@ -35,6 +36,7 @@ interface OrderView {
   fulfillment_type: string;
   pickup_address: string;
   shipping_method_name: string;
+  tracking_code?: string;
   items: OrderItemView[];
 }
 
@@ -98,6 +100,19 @@ export default function OrderPage({ token }: { token: string }) {
               <p className="mt-2 text-stone-600">
                 Feito em {formatDate(order.created_at)} · {STATUS_LABEL[order.status as OrderStatus] ?? order.status}
               </p>
+              <div className="mt-8 border-t border-stone-100 pt-6">
+                <OrderProgress status={order.status as OrderStatus} />
+              </div>
+              {order.status === 'aguardando_pagamento' && (
+                <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">
+                  Seu pedido está reservado. Conclua o pagamento para iniciarmos a produção.
+                </p>
+              )}
+              {order.status === 'entregue' && (
+                <p className="mt-6 rounded-2xl bg-sage-50 p-4 text-sm text-sage-700">
+                  Este pedido foi marcado como entregue. Esperamos que você goste das suas fotos.
+                </p>
+              )}
             </div>
 
             <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -143,6 +158,11 @@ export default function OrderPage({ token }: { token: string }) {
                     {order.delivery.neighborhood} - {order.delivery.city}/{order.delivery.state} - CEP {order.delivery.cep}
                   </p>
                   {order.shipping_method_name && <p className="mt-1 text-stone-500">Envio: {order.shipping_method_name}</p>}
+                  {order.tracking_code && (
+                    <p className="mt-3 rounded-xl bg-stone-50 p-3 text-stone-700">
+                      Código de rastreio: <strong>{order.tracking_code}</strong>
+                    </p>
+                  )}
                 </>
               )}
               <p className="mt-3 text-stone-500">E-mail do pedido: {order.customer_email}.</p>
