@@ -95,6 +95,8 @@ export default function CheckoutPage() {
   const [choice, setChoice] = useState('');
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [paymentEnabled, setPaymentEnabled] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepMessage, setCepMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -141,9 +143,60 @@ export default function CheckoutPage() {
     ),
   );
 
+  useEffect(() => {
+    const cep = form.cep.replace(/\D/g, '');
+    if (!needsAddress || cep.length !== 8) {
+      setCepMessage(null);
+      setCepLoading(false);
+      return;
+    }
+
+    let active = true;
+    setCepLoading(true);
+    setCepMessage(null);
+    void fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error('lookup');
+        return response.json() as Promise<{ erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string }>;
+      })
+      .then((data) => {
+        if (!active) return;
+        if (data.erro) {
+          setCepMessage('CEP não encontrado. Confira os números ou preencha o endereço manualmente.');
+          setErrors((prev) => ({ ...prev, cep: 'Confira o CEP informado.' }));
+          return;
+        }
+        setForm((prev) => ({
+          ...prev,
+          street: data.logradouro ?? prev.street,
+          neighborhood: data.bairro ?? prev.neighborhood,
+          city: data.localidade ?? prev.city,
+          state: data.uf ?? prev.state,
+        }));
+        setErrors((prev) => ({ ...prev, cep: undefined, street: undefined, neighborhood: undefined, city: undefined, state: undefined }));
+        setCepMessage('Endereço encontrado. Confira os dados antes de continuar.');
+      })
+      .catch(() => {
+        if (active) setCepMessage('Não foi possível consultar o CEP agora. Você pode preencher o endereço manualmente.');
+      })
+      .finally(() => {
+        if (active) setCepLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [form.cep, needsAddress]);
+
   const updateField = (key: keyof CustomerForm, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    const nextValue = key === 'cep'
+      ? value.replace(/\D/g, '').slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2')
+      : key === 'state'
+        ? value.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase()
+        : value;
+    setForm((prev) => ({ ...prev, [key]: nextValue }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
+    if (key === 'cep') setCepMessage(null);
   };
 
   const setItemProgress = (index: number, fraction: number) => {
@@ -275,6 +328,11 @@ export default function CheckoutPage() {
               {FIELDS.slice(2).map((field) => (
                 <FieldInput key={field.key} field={field} value={form[field.key]} error={errors[field.key]} onChange={(v) => updateField(field.key, v)} />
               ))}
+              {(cepLoading || cepMessage) && (
+                <p className={`sm:col-span-2 text-xs ${cepMessage?.startsWith('Endereço') ? 'text-sage-700' : cepMessage?.startsWith('CEP') ? 'text-rose-700' : 'text-stone-500'}`}>
+                  {cepLoading ? 'Consultando endereço pelo CEP...' : cepMessage}
+                </p>
+              )}
             </Section>
           )}
           {submitError && <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{submitError}</p>}
