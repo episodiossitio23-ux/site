@@ -34,6 +34,15 @@ Deno.serve(async (req) => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return json({ error: "Informe um e-mail válido." }, 400);
   }
+  if (redirectTo) {
+    try {
+      const requestOrigin = req.headers.get("origin");
+      const redirectOrigin = new URL(redirectTo).origin;
+      if (requestOrigin && redirectOrigin !== requestOrigin) throw new Error("origin");
+    } catch {
+      return json(GENERIC_RESPONSE);
+    }
+  }
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false },

@@ -37,6 +37,10 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "Endereço do site inválido." }, 400);
   }
+  const requestOrigin = req.headers.get("origin");
+  if (requestOrigin && origin.origin !== requestOrigin) {
+    return json({ error: "Endereço do site inválido." }, 400);
+  }
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false },

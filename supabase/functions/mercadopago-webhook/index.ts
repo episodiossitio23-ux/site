@@ -17,6 +17,7 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "GET" && req.method !== "POST") return json({ error: "Método não permitido." }, 405);
 
   const url = new URL(req.url);
   let type = url.searchParams.get("type") ?? url.searchParams.get("topic") ?? "";

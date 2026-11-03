@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { MapPin, Pencil, Plus, Trash2, X, Loader2 } from 'lucide-react';
+import { MapPin, Pencil, Plus, X, Loader2 } from 'lucide-react';
 import { useSavedAddresses, type SavedAddress, type SavedAddressInput } from '@/hooks/useSavedAddresses';
 
 const EMPTY_ADDRESS: SavedAddressInput = {
