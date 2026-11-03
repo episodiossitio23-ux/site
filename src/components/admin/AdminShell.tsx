@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Camera, LogOut, ClipboardList, Settings } from 'lucide-react';
+import { Camera, LogOut, ClipboardList, Settings, Tags } from 'lucide-react';
 import { useAdminSession } from '@/hooks/useAdminSession';
 import { supabase } from '@/lib/supabase';
 import { navigate } from '@/lib/router';
@@ -44,6 +44,12 @@ export default function AdminShell({ children }: { children: ReactNode }) {
               className="flex items-center gap-1.5 text-sm text-stone-700 transition hover:text-clay-700"
             >
               <ClipboardList size={16} /> Pedidos
+            </button>
+            <button
+              onClick={() => navigate('/admin/catalogo')}
+              className="flex items-center gap-1.5 text-sm text-stone-700 transition hover:text-clay-700"
+            >
+              <Tags size={16} /> Catálogo
             </button>
             <button
               onClick={() => navigate('/admin/configuracoes')}

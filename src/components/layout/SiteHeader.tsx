@@ -20,6 +20,12 @@ export default function SiteHeader() {
         </button>
         <div className="flex items-center gap-3">
           <button
+            onClick={() => navigate('/produtos')}
+            className="hidden rounded-full px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 sm:block"
+          >
+            Catálogo
+          </button>
+          <button
             onClick={() => navigate(accountPath)}
             aria-label={auth.status === 'signed-in' ? 'Minha conta' : 'Entrar'}
             className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:bg-stone-100"

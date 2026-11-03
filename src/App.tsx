@@ -1,11 +1,13 @@
 import { StoreProvider } from '@/context/StoreContext';
 import { matchPath, usePathname } from '@/lib/router';
 import HomePage from '@/pages/HomePage';
+import CatalogPage from '@/pages/CatalogPage';
 import EditorPage from '@/pages/EditorPage';
 import CartPage from '@/pages/CartPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import OrderPage from '@/pages/OrderPage';
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage';
+import AdminCatalogPage from '@/pages/admin/AdminCatalogPage';
 import AdminOrderDetailPage from '@/pages/admin/AdminOrderDetailPage';
 import AdminResetPasswordPage from '@/pages/admin/AdminResetPasswordPage';
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
@@ -17,6 +19,7 @@ import MyOrderDetailPage from '@/pages/account/MyOrderDetailPage';
 
 function renderRoute(path: string) {
   if (path === '/revelar') return <EditorPage />;
+  if (path === '/produtos') return <CatalogPage />;
   if (path === '/carrinho') return <CartPage />;
   if (path === '/finalizar') return <CheckoutPage />;
   if (path === '/entrar') return <AccountAuthPage />;
@@ -26,6 +29,7 @@ function renderRoute(path: string) {
   const myOrderParams = matchPath('/meus-pedidos/:id', path);
   if (myOrderParams) return <MyOrderDetailPage orderId={myOrderParams.id} />;
   if (path === '/admin') return <AdminOrdersPage />;
+  if (path === '/admin/catalogo') return <AdminCatalogPage />;
   if (path === '/admin/redefinir-senha') return <AdminResetPasswordPage />;
   if (path === '/admin/configuracoes') return <AdminSettingsPage />;
   const orderParams = matchPath('/pedido/:token', path);

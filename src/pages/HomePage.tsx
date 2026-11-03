@@ -17,12 +17,20 @@ export default function HomePage() {
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-stone-600">
           Envie suas fotos, ajuste o corte vendo o resultado em tempo real e receba suas impressões em casa.
         </p>
-        <button
-          onClick={() => navigate('/revelar')}
-          className="mt-10 inline-flex items-center gap-2 rounded-full bg-clay-500 px-7 py-3.5 font-medium text-white shadow-lg shadow-clay-500/20 transition hover:-translate-y-0.5 hover:bg-clay-600"
-        >
-          <Sparkles size={18} /> Revelar minhas fotos
-        </button>
+        <div className="mt-10 flex flex-wrap gap-3">
+          <button
+            onClick={() => navigate('/revelar')}
+            className="inline-flex items-center gap-2 rounded-full bg-clay-500 px-7 py-3.5 font-medium text-white shadow-lg shadow-clay-500/20 transition hover:-translate-y-0.5 hover:bg-clay-600"
+          >
+            <Sparkles size={18} /> Revelar minhas fotos
+          </button>
+          <button
+            onClick={() => navigate('/produtos')}
+            className="rounded-full border border-stone-300 px-7 py-3.5 font-medium text-stone-800 transition hover:bg-white"
+          >
+            Ver catálogo
+          </button>
+        </div>
       </section>
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <h2 className="font-display text-3xl text-stone-900">Formatos disponíveis</h2>
