@@ -25,6 +25,14 @@ export interface AdminOrder {
   created_at: string;
 }
 
+export interface OrderStatusHistory {
+  id: string;
+  previous_status: OrderStatus | null;
+  new_status: OrderStatus;
+  changed_by: string | null;
+  created_at: string;
+}
+
 export interface AdminOrderItem {
   id: string;
   position: number;

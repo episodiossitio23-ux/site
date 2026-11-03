@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock3, Download, Loader2 } from 'lucide-react';
 import AdminShell from '@/components/admin/AdminShell';
 import { supabase } from '@/lib/supabase';
 import { createZipBlob, downloadBlob, type ArchiveEntry } from '@/lib/archive';
 import { formatBRL, formatDate } from '@/lib/format';
 import { navigate } from '@/lib/router';
 import { ORDER_STATUSES, STATUS_LABEL, type OrderStatus } from '@/lib/orderStatus';
-import type { AdminOrder, AdminOrderItem } from '@/types/order';
+import type { AdminOrder, AdminOrderItem, OrderStatusHistory } from '@/types/order';
 
 type FileKind = 'original' | 'print';
 
@@ -23,6 +23,7 @@ function archiveNameFor(item: AdminOrderItem, kind: FileKind): string {
 export default function AdminOrderDetailPage({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<AdminOrder | null>(null);
   const [items, setItems] = useState<AdminOrderItem[]>([]);
+  const [history, setHistory] = useState<OrderStatusHistory[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -31,12 +32,13 @@ export default function AdminOrderDetailPage({ orderId }: { orderId: string }) {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [orderResult, itemsResult] = await Promise.all([
+      const [orderResult, itemsResult, historyResult] = await Promise.all([
         supabase.from('orders').select('*').eq('id', orderId).maybeSingle(),
         supabase.from('order_items').select('*').eq('order_id', orderId).order('position'),
+        supabase.from('order_status_history').select('id,previous_status,new_status,changed_by,created_at').eq('order_id', orderId).order('created_at', { ascending: false }),
       ]);
       if (!active) return;
-      if (orderResult.error || itemsResult.error) {
+      if (orderResult.error || itemsResult.error || historyResult.error) {
         setState('error');
         return;
       }
@@ -46,6 +48,7 @@ export default function AdminOrderDetailPage({ orderId }: { orderId: string }) {
       }
       setOrder(orderResult.data as AdminOrder);
       setItems((itemsResult.data as AdminOrderItem[]) ?? []);
+      setHistory((historyResult.data as OrderStatusHistory[]) ?? []);
       setState('ready');
     })();
     return () => {
@@ -210,6 +213,25 @@ export default function AdminOrderDetailPage({ orderId }: { orderId: string }) {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="rounded-3xl bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Clock3 size={17} className="text-clay-600" />
+                  <h2 className="font-display text-lg text-stone-900">Histórico do pedido</h2>
+                </div>
+                {history.length === 0 ? (
+                  <p className="mt-3 text-sm text-stone-500">Nenhuma alteração de status registrada ainda.</p>
+                ) : (
+                  <ol className="mt-4 space-y-4">
+                    {history.map((entry) => (
+                      <li key={entry.id} className="border-l-2 border-clay-200 pl-4">
+                        <p className="text-sm font-medium text-stone-900">{STATUS_LABEL[entry.new_status]}</p>
+                        <p className="mt-1 text-xs text-stone-500">{entry.previous_status ? `De ${STATUS_LABEL[entry.previous_status]} · ` : ''}{formatDate(entry.created_at)}</p>
+                        <p className="mt-1 text-xs text-stone-400">{entry.changed_by ? 'Alterado pela equipe da loja' : 'Alteração automática'}</p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
               </div>
               <div className="rounded-3xl bg-white p-6 text-sm text-stone-700 shadow-sm">
                 <p className="font-display text-lg text-stone-900">Cliente</p>
