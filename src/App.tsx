@@ -8,6 +8,7 @@ import CheckoutPage from '@/pages/CheckoutPage';
 import OrderPage from '@/pages/OrderPage';
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage';
 import AdminCatalogPage from '@/pages/admin/AdminCatalogPage';
+import AdminCustomersPage from '@/pages/admin/AdminCustomersPage';
 import AdminOrderDetailPage from '@/pages/admin/AdminOrderDetailPage';
 import AdminResetPasswordPage from '@/pages/admin/AdminResetPasswordPage';
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage';
@@ -30,6 +31,7 @@ function renderRoute(path: string) {
   if (myOrderParams) return <MyOrderDetailPage orderId={myOrderParams.id} />;
   if (path === '/admin') return <AdminOrdersPage />;
   if (path === '/admin/catalogo') return <AdminCatalogPage />;
+  if (path === '/admin/clientes') return <AdminCustomersPage />;
   if (path === '/admin/redefinir-senha') return <AdminResetPasswordPage />;
   if (path === '/admin/configuracoes') return <AdminSettingsPage />;
   const orderParams = matchPath('/pedido/:token', path);
