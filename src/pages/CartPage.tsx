@@ -6,7 +6,7 @@ import { navigate } from '@/lib/router';
 import { formatBRL } from '@/lib/format';
 
 export default function CartPage() {
-  const { photos, updatePhoto } = useStore();
+  const { photos, updatePhoto, clearCart } = useStore();
   const { formats, loading, error } = useFormats();
 
   const items = photos
@@ -61,7 +61,18 @@ export default function CartPage() {
                         >
                           <Minus size={14} />
                         </button>
-                        <span className="w-8 text-center font-medium">{photo.quantity}</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={photo.quantity}
+                          onChange={(event) => {
+                            const next = Number(event.target.value);
+                            if (Number.isFinite(next)) updatePhoto(photo.id, { quantity: Math.min(100, Math.max(1, next)) });
+                          }}
+                          aria-label={`Quantidade de ${photo.name}`}
+                          className="w-12 rounded-lg border border-stone-300 px-1 py-1 text-center font-medium text-stone-900"
+                        />
                         <button
                           onClick={() => updatePhoto(photo.id, { quantity: Math.min(100, photo.quantity + 1) })}
                           aria-label="Aumentar quantidade"
@@ -72,14 +83,17 @@ export default function CartPage() {
                       </div>
                       <p className="font-medium text-stone-900">{format ? formatBRL(lineTotal) : '-'}</p>
                     </div>
-                    <div className="flex gap-4 text-sm">
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                      {photo.caption.text.trim() && <span className="text-stone-500">Com legenda personalizada</span>}
                       <button
+                        type="button"
                         onClick={() => navigate(`/revelar?foto=${photo.id}`)}
                         className="flex items-center gap-1 text-clay-700 transition hover:underline"
                       >
                         <Pencil size={14} /> Editar corte
                       </button>
                       <button
+                        type="button"
                         onClick={() => updatePhoto(photo.id, { inCart: false })}
                         className="flex items-center gap-1 text-rose-700 transition hover:underline"
                       >
@@ -92,15 +106,29 @@ export default function CartPage() {
             </ul>
 
             <aside className="h-fit space-y-4 rounded-3xl bg-white p-6 shadow-sm lg:sticky lg:top-24">
-              <p className="font-display text-xl text-stone-900">Resumo</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-display text-xl text-stone-900">Resumo</p>
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="text-xs text-rose-700 transition hover:underline"
+                >
+                  Esvaziar
+                </button>
+              </div>
               <div className="flex justify-between text-sm text-stone-600">
-                <span>Fotografias</span>
+                <span>Fotos selecionadas</span>
+                <span>{items.length}</span>
+              </div>
+              <div className="flex justify-between text-sm text-stone-600">
+                <span>Total de cópias</span>
                 <span>{itemCount}</span>
               </div>
               <div className="flex justify-between border-t border-stone-200 pt-4 text-lg font-semibold text-stone-900">
-                <span>Total</span>
+                <span>Subtotal</span>
                 <span>{formatBRL(total)}</span>
               </div>
+              <p className="text-xs leading-5 text-stone-500">O frete e eventuais descontos serão calculados na etapa de finalização.</p>
               <button
                 onClick={() => navigate('/finalizar')}
                 disabled={loading}
