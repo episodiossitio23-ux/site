@@ -77,12 +77,13 @@ export default function AdminCatalogPage() {
     setProductRows((current) => current.map((item) => item.id === product.id ? { ...(data as CatalogProductWithVariants), variants: item.variants } : item));
   };
 
-  const updateVariant = async (product: CatalogProductWithVariants, variantId: string, priceInput: string) => {
-    const price = parseReaisToCents(priceInput);
-    if (price === null) return setFormError('Informe um preço válido.');
-    const { data, error: updateError } = await supabase.from('catalog_variants').update({ price_cents: price }).eq('id', variantId).select('*').maybeSingle();
-    if (updateError || !data) return setFormError('Não foi possível atualizar o preço.');
-    setProductRows((current) => current.map((item) => item.id === product.id ? { ...item, variants: item.variants.map((variant) => variant.id === variantId ? data : variant) } : item));
+  const updateVariant = async (product: CatalogProductWithVariants, variantId: string, patch: { price_cents?: number; min_quantity?: number; production_days?: number; is_active?: boolean }) => {
+    const { data, error: updateError } = await supabase.from('catalog_variants').update(patch).eq('id', variantId).select('*').maybeSingle();
+    if (updateError || !data) {
+      setFormError('Não foi possível atualizar a variante.');
+      return;
+    }
+    setProductRows((current) => current.map((item) => item.id === product.id ? { ...item, variants: item.variants.map((variant) => variant.id === variantId ? { ...variant, ...data } : variant) } : item));
   };
 
   return (
@@ -134,8 +135,17 @@ export default function AdminCatalogPage() {
   );
 }
 
-function VariantRow({ product, variant, onSave }: { product: CatalogProductWithVariants; variant: CatalogProductWithVariants['variants'][number]; onSave: (product: CatalogProductWithVariants, variantId: string, price: string) => Promise<void> }) {
+function VariantRow({ product, variant, onSave }: { product: CatalogProductWithVariants; variant: CatalogProductWithVariants['variants'][number]; onSave: (product: CatalogProductWithVariants, variantId: string, patch: { price_cents?: number; min_quantity?: number; production_days?: number; is_active?: boolean }) => Promise<void> }) {
   const [price, setPrice] = useState(centsToReaisInput(variant.price_cents));
-  const dirty = parseReaisToCents(price) !== variant.price_cents;
-  return <div className="flex items-center justify-between gap-3 rounded-xl bg-stone-50 px-3 py-2"><div><p className="text-sm font-medium text-stone-800">{variant.name}</p><p className="text-xs text-stone-500">{variant.finish_name} · {variant.production_days} dias · atual {formatBRL(variant.price_cents)}</p></div><div className="flex items-center gap-2"><input value={price} onChange={(event) => setPrice(event.target.value)} className="w-24 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm" aria-label={`Preço de ${variant.name}`} />{dirty && <button onClick={() => void onSave(product, variant.id, price)} className="rounded-lg bg-stone-900 p-2 text-white transition hover:bg-clay-600" aria-label={`Salvar preço de ${variant.name}`}><Save size={14} /></button>}</div></div>;
+  const [minimum, setMinimum] = useState(String(variant.min_quantity));
+  const [days, setDays] = useState(String(variant.production_days));
+  const priceCents = parseReaisToCents(price);
+  const minQuantity = Number(minimum);
+  const productionDays = Number(days);
+  const dirty = priceCents !== variant.price_cents || minQuantity !== variant.min_quantity || productionDays !== variant.production_days;
+  const save = () => {
+    if (priceCents === null || !Number.isInteger(minQuantity) || minQuantity < 1 || minQuantity > 1000 || !Number.isInteger(productionDays) || productionDays < 0 || productionDays > 90) return;
+    void onSave(product, variant.id, { price_cents: priceCents, min_quantity: minQuantity, production_days: productionDays });
+  };
+  return <div className="rounded-xl bg-stone-50 px-3 py-3"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-stone-800">{variant.name}</p><p className="text-xs text-stone-500">{variant.finish_name} · atual {formatBRL(variant.price_cents)}</p></div><ToggleSwitch checked={variant.is_active} onChange={(value) => void onSave(product, variant.id, { is_active: value })} label={`Ativar ${variant.name}`} /></div><div className="mt-3 grid grid-cols-3 gap-2"><input value={price} onChange={(event) => setPrice(event.target.value)} className="rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm" aria-label={`Preço de ${variant.name}`} placeholder="Preço" /><input value={minimum} onChange={(event) => setMinimum(event.target.value)} className="rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm" aria-label={`Quantidade mínima de ${variant.name}`} placeholder="Mínimo" /><input value={days} onChange={(event) => setDays(event.target.value)} className="rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm" aria-label={`Prazo de ${variant.name}`} placeholder="Dias" /></div>{dirty && <button onClick={save} className="mt-2 flex items-center gap-1 rounded-lg bg-stone-900 px-3 py-1.5 text-xs text-white transition hover:bg-clay-600"><Save size={14} /> Salvar variante</button>}</div>;
 }
