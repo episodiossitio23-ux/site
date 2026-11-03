@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, RotateCcw } from 'lucide-react';
 import AccountShell from '@/components/account/AccountShell';
 import OrderProgress from '@/components/account/OrderProgress';
 import OrderStatusBadge from '@/components/account/OrderStatusBadge';
+import OrderTimeline from '@/components/account/OrderTimeline';
 import { useFormats } from '@/hooks/useFormats';
 import { useStore } from '@/context/StoreContext';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +22,7 @@ function OrderDetail({ orderId }: { orderId: string }) {
   const { formats, loading: formatsLoading } = useFormats();
   const [order, setOrder] = useState<CustomerOrder | null>(null);
   const [items, setItems] = useState<CustomerOrderItem[]>([]);
+  const [history, setHistory] = useState<{ previous_status: string | null; new_status: string; created_at: string }[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [repeating, setRepeating] = useState(false);
   const [repeatMessage, setRepeatMessage] = useState<{ type: 'error' | 'warning'; text: string } | null>(null);
@@ -31,9 +33,10 @@ function OrderDetail({ orderId }: { orderId: string }) {
     Promise.all([
       supabase.from('orders').select(ORDER_COLUMNS).eq('id', orderId).maybeSingle(),
       supabase.from('order_items').select(ITEM_COLUMNS).eq('order_id', orderId).order('position'),
-    ]).then(([orderResult, itemsResult]) => {
+      supabase.from('order_status_history').select('previous_status,new_status,created_at').eq('order_id', orderId).order('created_at'),
+    ]).then(([orderResult, itemsResult, historyResult]) => {
       if (!active) return;
-      if (orderResult.error || itemsResult.error || !Array.isArray(itemsResult.data)) {
+      if (orderResult.error || itemsResult.error || historyResult.error || !Array.isArray(itemsResult.data)) {
         setState('error');
         return;
       }
@@ -43,6 +46,7 @@ function OrderDetail({ orderId }: { orderId: string }) {
       }
       setOrder(orderResult.data as CustomerOrder);
       setItems(itemsResult.data as CustomerOrderItem[]);
+      setHistory((historyResult.data as { previous_status: string | null; new_status: string; created_at: string }[]) ?? []);
       setState('ready');
     });
     return () => {
@@ -122,6 +126,8 @@ function OrderDetail({ orderId }: { orderId: string }) {
               </div>
             )}
           </section>
+
+          <OrderTimeline entries={history} />
 
           <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
             <h3 className="font-display text-xl text-stone-900">Fotografias</h3>

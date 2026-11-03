@@ -3,6 +3,7 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import SiteHeader from '@/components/layout/SiteHeader';
 import PayWithMercadoPago from '@/components/order/PayWithMercadoPago';
 import OrderProgress from '@/components/account/OrderProgress';
+import OrderTimeline from '@/components/account/OrderTimeline';
 import { supabase } from '@/lib/supabase';
 import { formatBRL, formatDate } from '@/lib/format';
 import { navigate } from '@/lib/router';
@@ -38,6 +39,7 @@ interface OrderView {
   shipping_method_name: string;
   tracking_code?: string;
   items: OrderItemView[];
+  status_history: { previous_status: string | null; new_status: string; created_at: string }[];
 }
 
 function isOrderView(value: unknown): value is OrderView {
@@ -114,6 +116,8 @@ export default function OrderPage({ token }: { token: string }) {
                 </p>
               )}
             </div>
+
+            <OrderTimeline entries={order.status_history} />
 
             <div className="rounded-3xl bg-white p-8 shadow-sm">
               <p className="font-display text-xl text-stone-900">Fotografias</p>
