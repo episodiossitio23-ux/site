@@ -14,7 +14,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'todos'>('todos');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'todos' | 'operacao'>('todos');
   const [search, setSearch] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
 
@@ -40,10 +40,13 @@ export default function AdminOrdersPage() {
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
     return orders.filter((order) => {
-      if (statusFilter !== 'todos' && order.status !== statusFilter) return false;
+      if (statusFilter === 'operacao' && (order.status === 'entregue' || order.status === 'cancelado')) return false;
+      if (statusFilter !== 'todos' && statusFilter !== 'operacao' && order.status !== statusFilter) return false;
       if (!term) return true;
       return (
-        String(order.order_number).includes(term) || order.customer_name.toLowerCase().includes(term)
+        String(order.order_number).includes(term) ||
+        order.customer_name.toLowerCase().includes(term) ||
+        order.customer_email.toLowerCase().includes(term)
       );
     });
   }, [orders, statusFilter, search]);
@@ -79,16 +82,17 @@ export default function AdminOrdersPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Número ou nome"
+                placeholder="Número, nome ou e-mail"
                 className="w-56 rounded-xl border border-stone-300 bg-white py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-clay-300"
               />
             </label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as OrderStatus | 'todos')}
+              onChange={(e) => setStatusFilter(e.target.value as OrderStatus | 'todos' | 'operacao')}
               className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm"
             >
               <option value="todos">Todos os status</option>
+              <option value="operacao">Fila operacional</option>
               {ORDER_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {STATUS_LABEL[status]}
@@ -106,6 +110,11 @@ export default function AdminOrdersPage() {
         </div>
 
         {!loading && orders.length > 0 && <OrderStatsCards stats={stats} />}
+        {!loading && orders.length > 0 && (
+          <p className="mt-5 text-sm text-stone-500">
+            Mostrando <span className="font-medium text-stone-700">{visible.length}</span> de {orders.length} pedido(s)
+          </p>
+        )}
         {error && <p className="mt-6 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</p>}
         {loading && <p className="mt-10 text-stone-500">Carregando pedidos...</p>}
 
