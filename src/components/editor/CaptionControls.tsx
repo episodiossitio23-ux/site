@@ -21,6 +21,13 @@ const ALIGN_OPTIONS: { value: CaptionAlign; label: string; Icon: typeof AlignLef
 ];
 
 const COLOR_OPTIONS = ['#2b2b2b', '#6b4f3a', '#3f5a4a', '#8a3b3b', '#2f4a6b'];
+const FRAME_OPTIONS = [
+  { value: '#FFFEFA', label: 'Marfim' },
+  { value: '#F5EBDD', label: 'Areia' },
+  { value: '#E7EFE8', label: 'Sálvia' },
+  { value: '#E8EEF5', label: 'Azul suave' },
+  { value: '#F4E4E4', label: 'Rosé' },
+];
 
 export default function CaptionControls({ caption, onChange }: CaptionControlsProps) {
   return (
@@ -95,16 +102,34 @@ export default function CaptionControls({ caption, onChange }: CaptionControlsPr
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-stone-700">Cor</p>
+        <p className="text-sm font-medium text-stone-700">Cor do texto</p>
         <div className="flex gap-2">
           {COLOR_OPTIONS.map((color) => (
             <button
               key={color}
+              type="button"
               onClick={() => onChange({ color })}
               aria-label={`Cor ${color}`}
               aria-pressed={caption.color === color}
               style={{ backgroundColor: color }}
               className={`h-7 w-7 rounded-full transition hover:scale-110 ${caption.color === color ? 'ring-2 ring-clay-500 ring-offset-2' : 'ring-1 ring-stone-200'}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-stone-700">Cor da moldura</p>
+        <div className="mt-2 grid grid-cols-5 gap-2">
+          {FRAME_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange({ frameColor: option.value })}
+              aria-label={`Moldura ${option.label}`}
+              aria-pressed={caption.frameColor === option.value}
+              style={{ backgroundColor: option.value }}
+              className={`h-9 rounded-lg border transition hover:-translate-y-0.5 ${caption.frameColor === option.value ? 'border-clay-500 ring-2 ring-clay-200' : 'border-stone-200'}`}
             />
           ))}
         </div>

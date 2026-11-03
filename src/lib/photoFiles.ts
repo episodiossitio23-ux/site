@@ -31,7 +31,7 @@ export async function restorePhoto(meta: PhotoMeta, file: Blob): Promise<PhotoDr
     id: meta.id,
     formatId: meta.formatId,
     quantity: meta.quantity,
-    caption: meta.caption,
+    caption: { ...DEFAULT_CAPTION, ...meta.caption },
     transform: meta.transform,
     inCart: meta.inCart,
   };

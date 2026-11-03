@@ -32,6 +32,7 @@ export interface CaptionStyle {
   size: number;
   align: CaptionAlign;
   color: string;
+  frameColor: string;
 }
 
 export interface PhotoDraft {

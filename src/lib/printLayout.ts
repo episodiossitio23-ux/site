@@ -43,6 +43,7 @@ export const DEFAULT_CAPTION: CaptionStyle = {
   size: 0.07,
   align: 'center',
   color: '#2b2b2b',
+  frameColor: '#FFFEFA',
 };
 
 export function createDefaultTransform(): CropTransform {

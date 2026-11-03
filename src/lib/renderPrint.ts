@@ -7,7 +7,6 @@ const CAPTION_FONT_FAMILY: Record<CaptionFont, string> = {
   hand: "'Segoe Script', 'Brush Script MT', cursive",
 };
 
-const CARD_COLOR = '#FFFEFA';
 const ORIGINAL_BACKDROP = '#E9E4DC';
 
 export interface RenderOptions {
@@ -136,7 +135,7 @@ export function renderPrint(
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  ctx.fillStyle = format.kind === 'polaroid' ? CARD_COLOR : ORIGINAL_BACKDROP;
+  ctx.fillStyle = format.kind === 'polaroid' ? photo.caption.frameColor : ORIGINAL_BACKDROP;
   ctx.fillRect(0, 0, width, height);
 
   drawPhoto(ctx, photo, photo.transform, format, width, options);
