@@ -2,18 +2,23 @@ import { Minus, Plus, Pencil, Trash2, ShoppingBag } from 'lucide-react';
 import SiteHeader from '@/components/layout/SiteHeader';
 import { useStore } from '@/context/StoreContext';
 import { useFormats } from '@/hooks/useFormats';
+import { useCatalog } from '@/hooks/useCatalog';
+import { getCatalogUnitPrice } from '@/lib/catalogPricing';
 import { navigate } from '@/lib/router';
 import { formatBRL } from '@/lib/format';
 
 export default function CartPage() {
   const { photos, updatePhoto, clearCart } = useStore();
   const { formats, loading, error } = useFormats();
+  const { products } = useCatalog();
 
   const items = photos
     .filter((p) => p.inCart)
     .map((photo) => {
       const format = formats.find((f) => f.id === photo.formatId) ?? null;
-      return { photo, format, lineTotal: format ? format.price_cents * photo.quantity : 0 };
+      const variant = products.flatMap((product) => product.variants).find((item) => item.id === photo.catalogVariantId) ?? null;
+      const unitPrice = variant ? getCatalogUnitPrice(variant, photo.quantity) : format?.price_cents ?? 0;
+      return { photo, format, variant, unitPrice, lineTotal: unitPrice * photo.quantity };
     });
 
   const itemCount = items.reduce((sum, item) => sum + item.photo.quantity, 0);
@@ -44,12 +49,12 @@ export default function CartPage() {
         {items.length > 0 && (
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
             <ul className="space-y-4">
-              {items.map(({ photo, format, lineTotal }) => (
+              {items.map(({ photo, format, variant, unitPrice, lineTotal }) => (
                 <li key={photo.id} className="flex gap-4 rounded-2xl bg-white p-4 shadow-sm transition hover:shadow-md">
                   <img src={photo.url} alt={photo.name} className="h-24 w-24 flex-none rounded-xl object-cover" />
                   <div className="flex flex-1 flex-col justify-between gap-2">
                     <div>
-                      <p className="font-medium text-stone-900">{format?.label ?? 'Formato indisponível'}</p>
+                      <p className="font-medium text-stone-900">{variant?.name ?? format?.label ?? 'Formato indisponível'}</p>
                       <p className="truncate text-sm text-stone-500">{photo.name}</p>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -82,6 +87,7 @@ export default function CartPage() {
                         </button>
                       </div>
                       <p className="font-medium text-stone-900">{format ? formatBRL(lineTotal) : '-'}</p>
+                      {variant && unitPrice !== variant.price_cents && <p className="text-xs text-sage-700">Desconto por quantidade aplicado</p>}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
                       {photo.caption.text.trim() && <span className="text-stone-500">Com legenda personalizada</span>}

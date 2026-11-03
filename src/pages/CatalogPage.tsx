@@ -75,7 +75,7 @@ export default function CatalogPage() {
                       <span className="flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-1"><Check size={13} /> {product.variants.length} opções</span>
                       {product.variants[0] && <span className="flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-1"><Clock3 size={13} /> {product.variants[0].production_days} dias</span>}
                     </div>
-                    <button onClick={() => navigate('/revelar')} className="flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 py-2.5 text-sm font-medium text-white transition hover:bg-clay-600">
+                    <button onClick={() => navigate(`/revelar?produto=${product.id}`)} className="flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 py-2.5 text-sm font-medium text-white transition hover:bg-clay-600">
                       Escolher e revelar <ArrowRight size={16} />
                     </button>
                   </div>

@@ -5,6 +5,7 @@ import CaptionControls from '@/components/editor/CaptionControls';
 import CropPreview from '@/components/editor/CropPreview';
 import { useStore } from '@/context/StoreContext';
 import { useFormats } from '@/hooks/useFormats';
+import { useCatalog } from '@/hooks/useCatalog';
 import { navigate } from '@/lib/router';
 import { createPhotoDraft } from '@/lib/photoFiles';
 import { formatBRL } from '@/lib/format';
@@ -20,6 +21,7 @@ import type { CropTransform, Rotation } from '@/types/store';
 
 export default function EditorPage() {
   const { formats, error } = useFormats();
+  const { products } = useCatalog();
   const {
     photos,
     addPhotos,
@@ -34,13 +36,19 @@ export default function EditorPage() {
   const [selectedId, setSelectedId] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get('foto'),
   );
+  const productId = new URLSearchParams(window.location.search).get('produto');
+  const selectedProduct = products.find((product) => product.id === productId) ?? null;
+  const availableFormats = selectedProduct
+    ? formats.filter((item) => selectedProduct.variants.some((variant) => variant.format_id === item.id))
+    : formats;
   const [message, setMessage] = useState<string | null>(null);
   const [batchIds, setBatchIds] = useState<string[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const selected = photos.find((p) => p.id === selectedId) ?? photos[0] ?? null;
-  const formatId = selected?.formatId ?? formats[0]?.id ?? null;
-  const format = formats.find((f) => f.id === formatId) ?? null;
+  const formatId = selected?.formatId ?? availableFormats[0]?.id ?? null;
+  const format = availableFormats.find((f) => f.id === formatId) ?? availableFormats[0] ?? null;
+  const selectedVariant = selectedProduct?.variants.find((variant) => variant.format_id === format?.id) ?? null;
 
   const handleFiles = async (files: FileList | File[]) => {
     const results = await Promise.all(Array.from(files).map(createPhotoDraft));
@@ -74,10 +82,11 @@ export default function EditorPage() {
   };
 
   const handleFormatChange = (nextFormatId: string) => {
-    const nextFormat = formats.find((f) => f.id === nextFormatId);
+    const nextFormat = availableFormats.find((f) => f.id === nextFormatId);
     if (!selected || !nextFormat) return;
     updatePhoto(selected.id, {
       formatId: nextFormat.id,
+      catalogVariantId: selectedProduct?.variants.find((variant) => variant.format_id === nextFormat.id)?.id ?? null,
       transform: clampTransform(
         selected.transform,
         selected.image.naturalWidth,
@@ -94,7 +103,7 @@ export default function EditorPage() {
 
   const addToCart = () => {
     if (!selected || !format) return;
-    updatePhoto(selected.id, { inCart: true, formatId: format.id });
+    updatePhoto(selected.id, { inCart: true, formatId: format.id, catalogVariantId: selectedVariant?.id ?? null });
   };
 
   const duplicateSelected = async () => {
@@ -104,7 +113,7 @@ export default function EditorPage() {
       setMessage('Não foi possível duplicar esta foto.');
       return;
     }
-    addPhotos([{ ...result.photo, formatId: selected.formatId, quantity: selected.quantity, caption: { ...selected.caption }, transform: { ...selected.transform }, inCart: false }]);
+    addPhotos([{ ...result.photo, formatId: selected.formatId, catalogVariantId: selected.catalogVariantId, quantity: selected.quantity, caption: { ...selected.caption }, transform: { ...selected.transform }, inCart: false }]);
     setSelectedId(result.photo.id);
   };
 
@@ -120,6 +129,7 @@ export default function EditorPage() {
       if (!photo) return;
       updatePhoto(id, {
         formatId: nextFormat.id,
+        catalogVariantId: selectedProduct?.variants.find((variant) => variant.format_id === nextFormat.id)?.id ?? null,
         transform: clampTransform(
           photo.transform,
           photo.image.naturalWidth,
@@ -261,15 +271,16 @@ export default function EditorPage() {
 
             <aside className="space-y-6 rounded-3xl bg-white p-6 shadow-sm">
               <div>
+                {selectedProduct && <p className="mb-1 text-xs font-medium uppercase tracking-wide text-clay-600">{selectedProduct.name}</p>}
                 <p className="text-sm font-medium text-stone-700">Formato</p>
                 <select
                   value={format.id}
                   onChange={(e) => handleFormatChange(e.target.value)}
                   className="mt-2 w-full rounded-xl border border-stone-300 px-3 py-2"
                 >
-                  {formats.map((f) => (
+                  {availableFormats.map((f) => (
                     <option key={f.id} value={f.id}>
-                      {f.label} - {formatBRL(f.price_cents)}
+                      {f.label} - {formatBRL(selectedProduct?.variants.find((variant) => variant.format_id === f.id)?.price_cents ?? f.price_cents)}
                     </option>
                   ))}
                 </select>

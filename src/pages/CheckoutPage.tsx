@@ -3,6 +3,8 @@ import { ShoppingBag } from 'lucide-react';
 import SiteHeader from '@/components/layout/SiteHeader';
 import { useStore } from '@/context/StoreContext';
 import { useFormats } from '@/hooks/useFormats';
+import { useCatalog } from '@/hooks/useCatalog';
+import { getCatalogUnitPrice } from '@/lib/catalogPricing';
 import { supabase } from '@/lib/supabase';
 import { navigate } from '@/lib/router';
 import { formatBRL } from '@/lib/format';
@@ -24,6 +26,8 @@ interface DeliveryOption {
 interface CartLine {
   photo: PhotoDraft;
   format: PrintFormat;
+  variant: ReturnType<typeof useCatalog>['products'][number]['variants'][number] | null;
+  unitPrice: number;
 }
 
 const FIELDS: { key: keyof CustomerForm; label: string; half?: boolean; placeholder?: string }[] = [
@@ -80,6 +84,7 @@ function extensionOf(name: string): string {
 export default function CheckoutPage() {
   const { photos, clearCart } = useStore();
   const { formats, loading } = useFormats();
+  const { products } = useCatalog();
   const [form, setForm] = useState<CustomerForm>(EMPTY_CUSTOMER);
   const [errors, setErrors] = useState<CustomerErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -88,7 +93,8 @@ export default function CheckoutPage() {
 
   const lines: CartLine[] = photos.flatMap((photo) => {
     const format = formats.find((f) => f.id === photo.formatId);
-    return photo.inCart && format ? [{ photo, format }] : [];
+    const variant = products.flatMap((product) => product.variants).find((item) => item.id === photo.catalogVariantId) ?? null;
+    return photo.inCart && format ? [{ photo, format, variant, unitPrice: variant ? getCatalogUnitPrice(variant, photo.quantity) : format.price_cents }] : [];
   });
   const [pickup, setPickup] = useState<Pick<StoreSettings, 'pickup_address' | 'pickup_hours'> | null>(null);
   const [methods, setMethods] = useState<ShippingMethod[]>([]);
@@ -120,7 +126,7 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  const subtotal = lines.reduce((sum, { photo, format }) => sum + format.price_cents * photo.quantity, 0);
+  const subtotal = lines.reduce((sum, { photo, unitPrice }) => sum + unitPrice * photo.quantity, 0);
   const options: DeliveryOption[] = [
     ...(pickup?.pickup_address
       ? [
@@ -232,6 +238,7 @@ export default function CheckoutPage() {
 
         items.push({
           format_id: format.id,
+          catalog_variant_id: photo.catalogVariantId,
           quantity: photo.quantity,
           caption: photo.caption.text,
           caption_style: photo.caption,
@@ -341,13 +348,13 @@ export default function CheckoutPage() {
         <aside className="h-fit space-y-4 rounded-3xl bg-white p-6 shadow-sm lg:sticky lg:top-24">
           <p className="font-display text-xl text-stone-900">Resumo do pedido</p>
           <ul className="space-y-3 text-sm">
-            {lines.map(({ photo, format }, index) => (
+            {lines.map(({ photo, format, variant, unitPrice }, index) => (
               <li key={photo.id}>
                 <div className="flex justify-between text-stone-700">
                   <span>
-                    {photo.quantity}x {format.label}
+                    {photo.quantity}x {variant?.name ?? format.label}
                   </span>
-                  <span>{formatBRL(format.price_cents * photo.quantity)}</span>
+                  <span>{formatBRL(unitPrice * photo.quantity)}</span>
                 </div>
                 {submitting && (
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-stone-200">

@@ -42,6 +42,7 @@ export interface PhotoDraft {
   url: string;
   image: HTMLImageElement;
   formatId: string | null;
+  catalogVariantId: string | null;
   quantity: number;
   caption: CaptionStyle;
   transform: CropTransform;
@@ -52,7 +53,7 @@ export interface PhotoDraft {
 
 export type PhotoMeta = Pick<
   PhotoDraft,
-  'id' | 'name' | 'formatId' | 'quantity' | 'caption' | 'transform' | 'inCart'
+  'id' | 'name' | 'formatId' | 'catalogVariantId' | 'quantity' | 'caption' | 'transform' | 'inCart'
 >;
 
 export type QualityLevel = 'excelente' | 'adequada' | 'baixa' | 'insuficiente';

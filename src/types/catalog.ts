@@ -22,6 +22,13 @@ export interface CatalogProduct {
   sort_order: number;
 }
 
+export interface CatalogQuantityDiscount {
+  id: string;
+  variant_id: string;
+  minimum_quantity: number;
+  percent_off: number;
+}
+
 export interface CatalogVariant {
   id: string;
   product_id: string;
@@ -37,5 +44,5 @@ export interface CatalogVariant {
 }
 
 export interface CatalogProductWithVariants extends CatalogProduct {
-  variants: CatalogVariant[];
+  variants: (CatalogVariant & { discounts?: CatalogQuantityDiscount[] })[];
 }

@@ -11,6 +11,7 @@ function toMeta(photo: PhotoDraft): PhotoMeta {
     id: photo.id,
     name: photo.name,
     formatId: photo.formatId,
+    catalogVariantId: photo.catalogVariantId,
     quantity: photo.quantity,
     caption: photo.caption,
     transform: photo.transform,
